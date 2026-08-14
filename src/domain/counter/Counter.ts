@@ -1,0 +1,61 @@
+import { CounterId, CounterType, ProjectId } from "../shared/types";
+import { validateName } from "../shared/validators";
+
+export class Counter {
+  private constructor(
+    readonly id: CounterId,
+    readonly projectId: ProjectId,
+    readonly type: CounterType,
+    private _name: string,
+    private _value: number,
+    readonly createdAt: Date
+  ) {}
+
+  static create(id: CounterId, projectId: ProjectId, name: string): Counter {
+    const validatedName = validateName(name, "Counter");
+    const now = new Date();
+    return new Counter(id, projectId, "simple", validatedName, 1, now);
+  }
+
+  // used in the PatternCounter entity
+  static createBaseForPattern(id: CounterId, projectId: ProjectId, name: string) : Counter {
+    const validatedName = validateName(name, "Counter");
+    const now = new Date();
+    return new Counter(id, projectId, "pattern", validatedName, 1, now);
+  }
+
+  static restore(
+    id: CounterId,
+    projectId: ProjectId,
+    type: CounterType,
+    name: string,
+    value: number,
+    createdAt: Date
+  ): Counter {
+    return new Counter(id, projectId, type, name, value, createdAt);
+  }
+
+  advance(): void {
+    this._value += 1;
+  }
+
+  decrement(): void {
+    this._value = Math.max(1, this._value - 1);
+  }
+
+  reset(): void {
+    this._value = 1;
+  }
+
+  rename(name: string): void {
+    this._name = validateName(name, "Counter");
+  }
+
+  get name(): string {
+    return this._name;
+  }
+
+  get value(): number {
+    return this._value;
+  }
+}
