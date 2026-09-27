@@ -1,0 +1,112 @@
+import { Project } from "@/src/domain/project/Project";
+import { createCounterId, createProjectId } from "@/src/domain/shared/utils";
+
+const PROJECT_ID = createProjectId();
+const COUNTER_ID = createCounterId();
+
+function createProject(name = "Sweater") {
+  return Project.create(PROJECT_ID, name);
+}
+
+describe("Project Domain Entity", () => {
+  it("creates a project", () => {
+    const project = createProject();
+
+    expect(project.name).toBe("Sweater");
+  });
+
+  it("trims the project name", () => {
+    const project = createProject("  Sweater  ");
+    expect(project.name).toBe("Sweater");
+  });
+
+  it("sets createdAt and updatedAt", () => {
+    const project = createProject();
+
+    expect(project.createdAt).toBeInstanceOf(Date);
+    expect(project.updatedAt).toBeInstanceOf(Date);
+
+    expect(project.createdAt.getTime())
+      .toBe(project.updatedAt.getTime());
+  });
+
+  it("throws when name is empty", () => {
+    expect(() => 
+      createProject("")).toThrow("Project name cannot be empty");
+  });
+
+  it("restores a project", () => {
+    const createdAt = new Date("2026-01-01");
+    const updatedAt = new Date("2026-01-02");
+
+    const project = Project.restore(
+      PROJECT_ID,
+      "Sweater",
+      createdAt,
+      updatedAt
+    );
+
+    expect(project.createdAt).toBe(createdAt);
+    expect(project.updatedAt).toBe(updatedAt);
+    expect(project.name).toBe("Sweater");
+  });
+
+  it("renames a project", () => {
+    const project = createProject();
+
+    project.rename("Scarf");
+
+    expect(project.name).toBe("Scarf");
+  });
+
+  it("trims the new name", () => {
+    const project = createProject();
+
+    project.rename("  Scarf  ");
+
+    expect(project.name).toBe("Scarf");
+  });
+
+  it("updates updatedAt when renamed", () => {
+    jest.useFakeTimers();
+    
+    const project = createProject();
+    const oldDate = project.updatedAt;
+
+    jest.advanceTimersByTime(1000);
+    project.rename("Scarf");
+
+    expect(project.updatedAt.getTime()).toBeGreaterThan(oldDate.getTime());
+
+    jest.useRealTimers();
+  });
+
+  it("throws when renaming to an empty name", () => {
+    const project = createProject();
+
+    expect(() =>
+      project.rename("")
+    ).toThrow("Project name cannot be empty");
+  });
+
+  it("creates a Counter for a Project", () => {
+    const project = createProject();
+    const counterName = "Left Sleeve";
+
+    const counter = project.createCounter(COUNTER_ID, counterName);
+
+    expect(counter.name).toBe(counterName);
+    expect(counter.type).toBe("simple");
+  });
+
+  it("creates a PatternCounter for a Project", () => {
+    const project = createProject();
+    const counterName = "Cable";
+
+    const counter = project.createPatternCounter(COUNTER_ID, counterName, 8);
+
+    expect(counter.name).toBe(counterName);
+    expect(counter.type).toBe("pattern");
+    expect(counter.patternLength).toBe(8);
+  });
+});

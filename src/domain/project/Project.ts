@@ -1,4 +1,6 @@
-import { ProjectId } from "../shared/types";
+import { Counter } from "../counter/Counter";
+import { PatternCounter } from "../counter/PatternCounter";
+import { CounterId, ProjectId } from "../shared/types";
 import { validateName } from "../shared/validators";
 
 export class Project {
@@ -24,9 +26,13 @@ export class Project {
     return new Project(id, name, createdAt, updatedAt);
   }
   
-  createCounter(){}
+  createCounter(counterId: CounterId, name: string): Counter {
+    return Counter.create(counterId, this.id, name);
+  }
 
-  createPatternCounter(){}
+  createPatternCounter(counterId: CounterId, name: string, patternLength: number): PatternCounter {
+    return PatternCounter.create(counterId, this.id, name, patternLength);
+  }
 
   rename(name: string): void {
     this._name = validateName(name, "Project");
