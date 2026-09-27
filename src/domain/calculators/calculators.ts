@@ -1,73 +1,113 @@
-import { BaseDistribution, DecreaseResult, IncreaseResult } from "./types";
+import { Group, IKnittingStrategy, KnittingResult } from "./types";
 
-function buildBaseDistribution(originalStitches: number, changes: number): BaseDistribution {
-  if (changes <= 0) {
-    return { originalStitches, changes: 0, intervals: [], groups: [] };
+export class UniformDistributor {
+  static distribute(originalStitches: number, changes: number): number[] {
+    if (changes <= 0) return [];
+    if (changes > originalStitches) return new Array(changes).fill(1);  // not sure
+
+    const intervals: number[] = [];
+    const baseInterval = Math.floor(originalStitches / changes);
+    const remainder = originalStitches % changes;
+    let error = changes / 2;
+
+    for (let i = 0; i < changes; i++) {
+      error -= remainder;
+      if (error < 0) {
+        intervals.push(baseInterval + 1);
+        error += changes;
+      } else {
+        intervals.push(baseInterval);
+      }
+    }
+
+    return intervals;
   }
 
-  if (changes > originalStitches) {
+  static groupIntervals(intervals: number[]): Group[] {
+    const groups: Group[] = [];
+    for (const interval of intervals) {
+      const lastGroup = groups[groups.length - 1];
+      if (lastGroup && lastGroup.stitchCount === interval) {
+        lastGroup.repeat++;
+      } else {
+        groups.push({ stitchCount: interval, repeat: 1} );
+      }
+    }
+
+    return groups;
+  }
+}
+
+export class DecreaseStrategy implements IKnittingStrategy {
+  readonly operation = "decrease" as const;
+
+  validate(originalStitches: number, changes: number): void {
+    if (changes < 0) {
+      throw new Error("Decrease count cannot be negative");
+    }
+
+    const maxAllowed = Math.floor(originalStitches / 2);
+    if (changes > maxAllowed) {
+      throw new Error("Decrease cannot be more than half the current stitch count");
+    }
+  }
+
+  calculateTargetStitches(originalStitches: number, effectiveChanges: number): number {
+    return originalStitches - effectiveChanges;
+  }
+}
+
+export class IncreaseStrategy implements IKnittingStrategy {
+  readonly operation = "increase" as const;
+
+  validate(originalStitches: number, changes: number): void {
+    if (changes < 0) {
+    throw new Error("Increase count cannot be negative");
+    }  
+  }
+
+  calculateTargetStitches(originalStitches: number, effectiveChanges: number): number {
+    return originalStitches + effectiveChanges;
+  }
+}
+
+export class KnittingCalculator {
+  static calculate(
+    originalStitches: number, 
+    changes: number, 
+    strategy: IKnittingStrategy
+  ): KnittingResult {
+    strategy.validate(originalStitches, changes);
+
+    const targetStitches = strategy.calculateTargetStitches(originalStitches, changes);
+    const intervals = UniformDistributor.distribute(originalStitches, changes);
+    const groups = UniformDistributor.groupIntervals(intervals);
+
     return {
       originalStitches,
       changes,
-      intervals: new Array(changes).fill(1),
-      groups: [{ stitchCount: 1, repeat: changes }]
+      targetStitches,
+      operation: strategy.operation,
+      intervals,
+      groups
     };
   }
-
-  const intervals: number[] = [];
-  const baseInterval = Math.floor(originalStitches/changes);
-  const remainder = originalStitches % changes;
-
-  let error = changes / 2;
-
-  for (let i = 0; i < changes; i++) {
-    error -= remainder;
-    if (error < 0) {
-      intervals.push(baseInterval + 1);
-      error += changes;
-    } else {
-      intervals.push(baseInterval);
-    }
-  }
-
-  const groups: { stitchCount: number; repeat: number }[] = [];
-  for (const interval of intervals) {
-    const lastGroup = groups[groups.length - 1];
-    if (lastGroup && lastGroup.stitchCount === interval) {
-      lastGroup.repeat++;
-    } else {
-      groups.push({ stitchCount: interval, repeat: 1 });
-    }
-  }
-
-  return {
-    originalStitches,
-    changes,
-    intervals,
-    groups
-  }
 }
 
-export function distributeDecreases(originalStitches: number, changes: number): DecreaseResult {
-  const base = buildBaseDistribution(originalStitches, changes);
-  // If changes is negative, we treat it as zero to avoid increasing the stitch count when we are supposed to decrease.
-  const effectiveChanges = changes > 0 ? changes : 0;
-
-  return {
-    ...base,
-    type: "decrease",
-    targetStitches: originalStitches - effectiveChanges
-  }
+/**
+ * // Calculando diminuições (limitadas a no máximo metade dos pontos)
+try {
+  KnittingCalculator.calculate(30, 20, new DecreaseStrategy());
+} catch (error) {
+  console.log(error.message); 
+  // Exibe exatamente: "Decrease cannot be more than half the Current Stitch Count"
 }
 
-export function distributeIncreases(originalStitches: number, changes: number): IncreaseResult {
-  const base = buildBaseDistribution(originalStitches, changes);
-  // If changes is negative, we treat it as zero to avoid decreasing the stitch count when we are supposed to increase.
-  const effectiveChanges = changes > 0 ? changes : 0;
-
-  return {
-    ...base,
-    type: "increase",
-    targetStitches: originalStitches + effectiveChanges
-  }
-}
+// Calculando aumentos
+const resultIncrease = KnittingCalculator.calculate(
+  30, 
+  5, 
+  new IncreaseStrategy()
+);
+// Output: effectiveChanges = 5, targetStitches = 35
+ */
