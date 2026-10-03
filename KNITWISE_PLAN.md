@@ -361,3 +361,17 @@ Instantiated once. Hooks import from here and pass repos into use case calls.
 - create calculator use cases
 - create ugly test screens
 - first DB migration
+- should a Counter have a _rename_ use case?
+
+## Architecture
+```
+[ Screen / UI component ]
+        ↓ (calls)
+[ Custom Hook ] (ex: useProjects)  <-- Presentation Layer (React)
+        ↓ (executes)
+[ Use Case ] (ex: CreateProjectUseCase) <-- Domain Layer
+        ↓ (calls the interface)
+[ Repository Interface ]
+        ↓ (implements)
+[ SQLite Repository / Client ] <-- Infrastructure Layer
+```
