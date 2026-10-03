@@ -358,10 +358,10 @@ Instantiated once. Hooks import from here and pass repos into use case calls.
 - ~~create counter use cases~~
 - ~~create FakeDB for testing~~
 - ~~testing use cases with FakeDb~~
-- create calculator use cases
+- ~~create calculator hooks~~
+- ~~should a Counter have a _rename_ use case?~~
 - create ugly test screens
 - first DB migration
-- should a Counter have a _rename_ use case?
 
 ## Architecture
 ```

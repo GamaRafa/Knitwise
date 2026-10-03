@@ -1,6 +1,6 @@
 import { AnyCounter, CounterId, ProjectId } from "@/src/domain/shared/types";
 import { counterRepository } from "@/src/infrastructure/repositories";
-import { advanceCounter, createCounter, createPatternCounter, decrementCounter, deleteCounter, getCounter, getCountersByProject, resetCounter } from "@/src/use-cases/counter";
+import { advanceCounter, createCounter, createPatternCounter, decrementCounter, deleteCounter, getCounter, getCountersByProject, renameCounter, resetCounter } from "@/src/use-cases/counter";
 import { useCallback, useEffect, useState } from "react";
 
 export function useCounters(projectId: ProjectId) {
@@ -38,11 +38,20 @@ export function useCounters(projectId: ProjectId) {
     return await getCounter(counterRepository, id);
   }
 
+  const handleRename = async (id: CounterId, newName: string) => {
+    const updatedCounter = await renameCounter(counterRepository, id, newName);
+    setCounters(
+      prev => prev.map((p) => p.id === id ? updatedCounter : p)
+    );
+    return updatedCounter;
+  }
+
   const handleAdvance = async (id: CounterId) => {
     const updatedCounter = await advanceCounter(counterRepository, id);
     setCounters(
       prev => prev.map((p) => p.id === id ? updatedCounter : p)
     );
+    return updatedCounter;
   }
 
   const handleDecrement = async (id: CounterId) => {
@@ -50,6 +59,7 @@ export function useCounters(projectId: ProjectId) {
     setCounters(
       prev => prev.map((p) => p.id === id ? updatedCounter : p)
     );
+    return updatedCounter;
   }
 
   const handleReset = async (id: CounterId) => {
@@ -57,6 +67,7 @@ export function useCounters(projectId: ProjectId) {
     setCounters(
       prev => prev.map((p) => p.id === id ? updatedCounter : p)
     );
+    return updatedCounter;
   }
 
   useEffect(() => {
@@ -71,6 +82,7 @@ export function useCounters(projectId: ProjectId) {
     createPatternCounter: handleCreatePatternCounter,
     deleteCounter: handleDelete,
     getCounter: handleGetById,
+    renameCounter: handleRename,
     advanceCounter: handleAdvance,
     decrementCounter: handleDecrement,
     resetCounter: handleReset

@@ -34,6 +34,13 @@ export async function createPatternCounter(repository: ICounterRepository, proje
   return counter;
 }
 
+export async function renameCounter(repository: ICounterRepository, id: CounterId, newName: string): Promise<AnyCounter> {
+  const counter = await getCounter(repository, id);
+  counter.rename(newName);
+  await repository.save(counter);
+  return counter;
+}
+
 export async function advanceCounter(repository: ICounterRepository, id: CounterId): Promise<AnyCounter> {
   const counter = await getCounter(repository, id);
   counter.advance();
