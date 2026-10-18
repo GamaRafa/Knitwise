@@ -1,98 +1,122 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+// import { calculateKnitting } from "@/src/domain/calculators/new-calculators";
+import { decrease, increase } from "@/src/domain/calculators/calculators";
+import { useState } from "react";
+import { Button, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+export default function CalculatorMockScreen() {
+  const [incStitches, setIncStitches] = useState("0");
+  const [increases, setIncreases] = useState("0");
 
-export default function HomeScreen() {
+  const [decStitches, setDecStitches] = useState("0");
+  const [decreases, setDecreases] = useState("0");
+
+  const [resultIncrease, setResultIncrease] = useState("");
+  const [resultDecrease, setResultDecrease] = useState("");
+
+  // const { calculate, result, error } = useKnittingCalculator();
+
+  // const handleCalculate = () => {
+  //   try {
+  //     setError(null);
+  //     const res = calculateKnitting(Number(stitches), Number(changes), operation);
+  //     setResult(res);
+  //   } catch (err: any) {
+  //     setError(err.message);
+  //     setResult(null);
+  //   }
+  // }
+
+  const handleCalculateIncrease = () => {
+    const res = increase(Number(incStitches), Number(increases));
+    setResultIncrease(res);
+  }
+
+  const handleCalculateDecrease = () => {
+    const res = decrease(Number(decStitches), Number(decreases));
+    setResultDecrease(res);
+  }
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+    <ScrollView style={styles.container}>
+      <Text style={styles.title}>[Mock] Calculadora de Pontos</Text>
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+      <Text style={styles.subTitle}>Calculadora de Aumentos</Text>
+
+      <Text style={styles.label}>Pontos Atuais:</Text>
+      <TextInput
+        value={incStitches}
+        onChangeText={setIncStitches}
+        keyboardType="numeric"
+        style={styles.input}
+      />
+
+      <Text style={styles.label}>Aumentos:</Text>
+      <TextInput
+        value={increases}
+        onChangeText={setIncreases}
+        keyboardType="numeric"
+        style={styles.input}
+      />
+
+      <Button title="Calcular aumentos" onPress={handleCalculateIncrease} />
+
+      {/* Resultado aumentos */}
+      {resultIncrease && (
+        <View style={styles.resultBox}>
+          <Text style={styles.bold}>Resultado: </Text>
+          <Text>Pontos iniciais: {incStitches}</Text>
+          <Text>Pontos finais: {Number(incStitches) + Number(increases)}</Text>
+
+          <Text style={[styles.bold, {marginTop: 10}]}>Instrução:</Text>
+          <Text style={styles.instructionText}>{resultIncrease}</Text>
+        </View>
+      )}
+
+      <Text style={styles.subTitle}>Calculadora de Diminuições</Text>
+
+      <Text style={styles.label}>Pontos Atuais:</Text>
+      <TextInput
+        value={decStitches}
+        onChangeText={setDecStitches}
+        keyboardType="numeric"
+        style={styles.input}
+      />
+
+      <Text style={styles.label}>Diminuições:</Text>
+      <TextInput
+        value={decreases}
+        onChangeText={setDecreases}
+        keyboardType="numeric"
+        style={styles.input}
+      />
+
+      <Button title="Calcular diminuições" onPress={handleCalculateDecrease} />
+
+      {/* Resultado diminuições */}
+      {resultDecrease && (
+        <View style={styles.resultBox}>
+          <Text style={styles.bold}>Resultado:</Text>
+          <Text>Pontos iniciais: {decStitches}</Text>
+          <Text>Pontos finais: {Number(decStitches) - Number(decreases)}</Text>
+
+          <Text style={[styles.bold, {marginTop: 10}]}>Instruções:</Text>
+          <Text style={styles.instructionText}>{resultDecrease}</Text>
+        </View>
+      )}
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
+  container: { flex: 1, padding: 20, paddingTop: 60 },
+  title: { fontSize: 18, fontWeight: "bold", marginBottom: 15 },
+  subTitle: { fontSize: 15, fontWeight: "bold", marginBottom: 15 },
+  label: { marginTop: 10, fontSize: 12 },
+  input: { borderWidth: 1, borderColor: "#ccc", padding: 8, marginVertical: 5 },
+  row: { marginVertical: 10 },
+  errorBox: { padding: 10, backgroundColor: "#ffcccc", marginTop: 15 },
+  errorText: { color: "#990000" },
+  resultBox: { padding: 10, backgroundColor: "#e6ffe6", marginTop: 15 },
+  bold: { fontWeight: "bold", marginTop: 5 },
+  instructionText: { fontSize: 14, color: "#2e7d32", marginTop: 4, fontStyle: "italic" }
 });

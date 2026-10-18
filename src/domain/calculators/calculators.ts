@@ -1,113 +1,338 @@
-import { Group, IKnittingStrategy, KnittingResult } from "./types";
+export function increase(originalStitchCount: number, stitchChange: number): string {
+  if (originalStitchCount <= 0) {
+    throw new Error("Original stitch count must be greater than zero")
+  }
+  
+  if (stitchChange <= 0) {
+    throw new Error("The number of increases must be greater than zero");
+  }
 
-export class UniformDistributor {
-  static distribute(originalStitches: number, changes: number): number[] {
-    if (changes <= 0) return [];
-    if (changes > originalStitches) return new Array(changes).fill(1);  // not sure
+  if (originalStitchCount <= stitchChange) {
+    throw new Error("Increase stitches must be less than the current stitch count");
+  }
 
-    const intervals: number[] = [];
-    const baseInterval = Math.floor(originalStitches / changes);
-    const remainder = originalStitches % changes;
-    let error = changes / 2;
+  const ratio = originalStitchCount / stitchChange;
+  const baseInterval = Math.floor(ratio);
+  const extendedInterval= baseInterval + 1;
 
-    for (let i = 0; i < changes; i++) {
-      error -= remainder;
-      if (error < 0) {
-        intervals.push(baseInterval + 1);
-        error += changes;
-      } else {
-        intervals.push(baseInterval);
+  let accumulatedSum = ratio;
+  let totalItemsInCycle = 1;
+
+  while (Math.abs(Math.floor(accumulatedSum + 1 / 100000) - accumulatedSum) > 1 / 100000) {
+    accumulatedSum += ratio;
+    totalItemsInCycle++;
+  }
+  accumulatedSum = Math.floor(accumulatedSum + 1 / 100000);
+
+  const cycleMultiplier = originalStitchCount / accumulatedSum;
+
+  let baseIntervalCount = -1;
+  let extendedIntervalCount = -1;
+
+  for (let index = 0; index <= totalItemsInCycle; index++) {
+    if (index * baseInterval + (totalItemsInCycle - index) * extendedInterval === accumulatedSum) {
+      baseIntervalCount = index;
+      extendedIntervalCount = totalItemsInCycle - index;
+    }
+  }
+
+  baseIntervalCount *= cycleMultiplier;
+  extendedIntervalCount *= cycleMultiplier;
+
+  let instructionOutput = "";
+
+  if (extendedIntervalCount === 0) {
+    const initialKnitStitches = Math.floor(baseInterval / 2);
+    const finalKnitStitches = baseInterval - initialKnitStitches;
+    baseIntervalCount -= 1;
+
+    instructionOutput += "k" + initialKnitStitches;
+
+    if (baseIntervalCount > 0) {
+      let repeatedPattern = "M1, k" + baseInterval;
+      if (baseIntervalCount > 1) {
+        repeatedPattern = "(" + repeatedPattern + ") " + baseIntervalCount + " times";
       }
+      instructionOutput += ", " + repeatedPattern;
     }
 
-    return intervals;
+    instructionOutput += ", M1, k" + finalKnitStitches;
+    return instructionOutput;
   }
 
-  static groupIntervals(intervals: number[]): Group[] {
-    const groups: Group[] = [];
-    for (const interval of intervals) {
-      const lastGroup = groups[groups.length - 1];
-      if (lastGroup && lastGroup.stitchCount === interval) {
-        lastGroup.repeat++;
-      } else {
-        groups.push({ stitchCount: interval, repeat: 1} );
+  let evenIntervalLength = 0;
+  let oddIntervalLength = 0;
+  let evenIntervalCount = 0;
+  let oddIntervalCount = 0;
+
+  if (baseInterval % 2 === 0) {
+    evenIntervalLength = baseInterval;
+    oddIntervalLength = extendedInterval;
+    evenIntervalCount = baseIntervalCount;
+    oddIntervalCount = extendedIntervalCount;
+  } else {
+    evenIntervalLength = extendedInterval;
+    oddIntervalLength = baseInterval;
+    evenIntervalCount = extendedIntervalCount;
+    oddIntervalCount = baseIntervalCount;
+  }
+
+  let startEdgeStitches = 0;
+  let groupOneLength = 0;
+  let groupOneCount = 0;
+  let middleGroupLength = 0;
+  let middleGroupCount = 0;
+  let groupTwoCount = 0;
+  let endEdgeStitches = 0;
+
+  if (oddIntervalCount % 2 === 0) {
+    startEdgeStitches = evenIntervalLength / 2;
+    groupOneLength = oddIntervalLength;
+    groupOneCount = oddIntervalCount / 2;
+    middleGroupLength = evenIntervalLength;
+    middleGroupCount = evenIntervalCount - 1;
+    groupTwoCount = oddIntervalCount / 2;
+    endEdgeStitches = evenIntervalLength / 2;
+  } else if (evenIntervalCount % 2 === 0) {
+    startEdgeStitches = Math.floor(oddIntervalLength / 2);
+    groupOneLength = evenIntervalLength;
+    groupOneCount = evenIntervalCount / 2;
+    middleGroupLength = oddIntervalLength;
+    middleGroupCount = oddIntervalCount - 1;
+    groupTwoCount = evenIntervalCount / 2;
+    endEdgeStitches = oddIntervalLength - startEdgeStitches;
+  } else {
+    startEdgeStitches = evenIntervalLength / 2;
+    groupOneLength = oddIntervalLength;
+    groupOneCount = Math.floor(oddIntervalCount / 2);
+    middleGroupLength = evenIntervalLength;
+    middleGroupCount = evenIntervalCount - 1;
+    groupTwoCount = groupOneCount + 1;
+    endEdgeStitches = evenIntervalLength / 2;
+  }
+
+  instructionOutput += "k" + startEdgeStitches;
+
+  if (groupOneCount > 0) {
+    let pattern = "M1, k" + groupOneLength;
+    if (groupOneCount > 1) {
+      pattern = "(" + pattern + ") " + groupOneCount + " times";
+    }
+    instructionOutput += ", " + pattern;
+  }
+
+  if (middleGroupCount > 0) {
+    let pattern = "M1, k" + middleGroupLength;
+    if (middleGroupCount > 1) {
+      pattern = "(" + pattern + ") " + middleGroupCount + " times";
+    }
+    instructionOutput += ", " + pattern;
+  }
+
+  if (groupTwoCount > 0) {
+    let pattern = "M1, k" + groupOneLength;
+    if (groupTwoCount > 1) {
+      pattern = "(" + pattern + ") " + groupTwoCount + " times";
+    }
+    instructionOutput += ", " + pattern;
+  }
+
+  instructionOutput += ", M1, k" + endEdgeStitches;
+
+  const calculatedStichTotal = 
+    startEdgeStitches +
+    (1 + groupOneLength) * groupOneCount +
+    (1 + middleGroupLength) * middleGroupCount +
+    (1 + groupOneLength) * groupTwoCount +
+    (1 + endEdgeStitches);
+
+  if (calculatedStichTotal !== originalStitchCount + stitchChange) {
+    throw new Error("The math ain't mathing! Try again with different numbers");
+  }
+
+  return instructionOutput;
+}
+
+export function decrease(originalStitchCount: number, stitchChange: number): string {
+  if (originalStitchCount <= 0) {
+    throw new Error("Original stitch count must be greater than zero");
+  }
+
+  if (stitchChange <= 0) {
+    throw new Error("The number of decreases must be greater than zero");
+  }
+
+  if (stitchChange >= originalStitchCount / 2) {
+    throw new Error("Decrease stitches cannot be more than half the current stitch count");
+  }
+
+  const remainingStitchesTarget = originalStitchCount - stitchChange;
+  const ratio = remainingStitchesTarget / stitchChange;
+  const baseInterval = Math.floor(ratio);
+  const extendedInterval = baseInterval + 1;
+
+  let accumulatedSum = ratio;
+  let totalItemsInCycle = 1;
+
+  while (Math.abs(Math.floor(accumulatedSum + 1 / 100000) - accumulatedSum) > 1 / 10000) {
+    accumulatedSum += ratio;
+    totalItemsInCycle++;
+  }
+  accumulatedSum = Math.floor(accumulatedSum + 1 / 100000);
+
+  const cycleMultiplier = remainingStitchesTarget / accumulatedSum;
+
+  let baseIntervalCount = -1;
+  let extendedIntervalCount = -1;
+
+  for (let index = 0; index <= totalItemsInCycle; index++) {
+    if (index * baseInterval + (totalItemsInCycle - index) * extendedInterval === accumulatedSum) {
+      baseIntervalCount = index;
+      extendedIntervalCount = totalItemsInCycle - index;
+    }
+  }
+
+  baseIntervalCount *= cycleMultiplier;
+  extendedIntervalCount *= cycleMultiplier;
+
+  let instructionOutput = "";
+
+  if (extendedIntervalCount === 0) {
+    const initialKnitStitches = Math.floor(baseInterval / 2);
+    const finalKnitStitches = baseInterval - initialKnitStitches;
+    baseIntervalCount -= 1;
+
+    instructionOutput += "K" + initialKnitStitches;
+
+    if (baseIntervalCount > 0) {
+      const patternKnitStitches = baseInterval - 1;
+      let repeatedPattern = "k2tog, k" + patternKnitStitches;
+
+      if (baseIntervalCount > 1) {
+        repeatedPattern = "(" + repeatedPattern + ") " + baseIntervalCount + " times";
       }
+      instructionOutput += ", " + repeatedPattern;
     }
 
-    return groups;
+    const remainingEndStitches = finalKnitStitches - 1;
+    instructionOutput += ", k2tog, k" + remainingEndStitches;
+    return instructionOutput;
   }
-}
 
-export class DecreaseStrategy implements IKnittingStrategy {
-  readonly operation = "decrease" as const;
+  let evenIntervalLength = 0;
+  let oddIntervalLength = 0;
+  let evenIntervalCount = 0;
+  let oddIntervalCount = 0;
 
-  validate(originalStitches: number, changes: number): void {
-    if (changes < 0) {
-      throw new Error("Decrease count cannot be negative");
+  if (baseInterval % 2 === 0) {
+    evenIntervalLength = baseInterval;
+    oddIntervalLength = extendedInterval;
+    evenIntervalCount = baseIntervalCount;
+    oddIntervalCount = extendedIntervalCount;
+  } else {
+    evenIntervalLength = extendedInterval;
+    oddIntervalLength = baseInterval;
+    evenIntervalCount = extendedIntervalCount;
+    oddIntervalCount = baseIntervalCount;
+  }
+
+  let startEdgeStitches = 0;
+  let groupOneRemainingKnit = 0;
+  let groupOneCount = 0;
+  let middleGroupRemainingKnit = 0;
+  let middleGroupCount = 0;
+  let groupTwoCount = 0;
+  let endEdgeStitches = 0;
+
+  if (oddIntervalCount % 2 === 0) {
+    startEdgeStitches = evenIntervalLength / 2;
+    groupOneRemainingKnit = oddIntervalLength - 1;
+    groupOneCount = oddIntervalCount / 2;
+    middleGroupRemainingKnit = evenIntervalLength - 1;
+    middleGroupCount = evenIntervalCount - 1;
+    groupTwoCount = oddIntervalCount / 2;
+    endEdgeStitches = evenIntervalLength / 2 - 1;
+  } else if (evenIntervalCount % 2 === 0) {
+    startEdgeStitches = Math.floor(oddIntervalLength / 2);
+    groupOneRemainingKnit = evenIntervalLength - 1;
+    groupOneCount = evenIntervalCount / 2;
+    middleGroupRemainingKnit = oddIntervalLength - 1;
+    middleGroupCount = oddIntervalCount - 1;
+    groupTwoCount = evenIntervalCount / 2;
+    endEdgeStitches = oddIntervalLength - startEdgeStitches - 1;
+  } else {
+    startEdgeStitches = evenIntervalLength / 2;
+    groupOneRemainingKnit = oddIntervalLength - 1;
+    groupOneCount = Math.floor(oddIntervalCount / 2);
+    middleGroupRemainingKnit = evenIntervalLength - 1;
+    middleGroupCount = evenIntervalCount - 1;
+    groupTwoCount = groupOneCount + 1;
+    endEdgeStitches = evenIntervalLength / 2 - 1;
+  }
+
+  instructionOutput += "K" + startEdgeStitches;
+
+  if (groupOneCount > 0) {
+    let pattern = "k2tog";
+    if (groupOneRemainingKnit > 0) {
+      pattern += ", k" + groupOneRemainingKnit;
     }
-
-    const maxAllowed = Math.floor(originalStitches / 2);
-    if (changes > maxAllowed) {
-      throw new Error("Decrease cannot be more than half the current stitch count");
+    if (groupOneCount > 1) {
+      if (groupOneRemainingKnit > 0) {
+        pattern = "(" + pattern + ")";
+      }
+      pattern += " " + groupOneCount + " times";
     }
+    instructionOutput += ", " + pattern;
   }
 
-  calculateTargetStitches(originalStitches: number, effectiveChanges: number): number {
-    return originalStitches - effectiveChanges;
+  if (middleGroupCount > 0) {
+    let pattern = "k2tog";
+    if (middleGroupRemainingKnit > 0) {
+      pattern += ", k" + middleGroupRemainingKnit;
+    }
+    if (middleGroupCount > 1) {
+      if (middleGroupRemainingKnit > 0) {
+        pattern = "(" + pattern + ")";
+      }
+      pattern += " " + middleGroupCount + " times";
+    }
+    instructionOutput += ", " + pattern;
   }
+
+  if (groupTwoCount > 0) {
+    let pattern = "k2tog";
+    if (groupOneRemainingKnit > 0) {
+      pattern += ", k" + groupOneRemainingKnit;
+    }
+    if (groupTwoCount > 1) {
+      if (groupOneRemainingKnit > 0) {
+        pattern = "(" + pattern + ")";
+      }
+      pattern += " " + groupTwoCount + " times";
+    }
+    instructionOutput += ", " + pattern;
+  }
+
+  instructionOutput += ", k2tog";
+
+  if (endEdgeStitches > 0) {
+    instructionOutput += ", k" + endEdgeStitches;
+  }
+
+  const calculatedStitchTotal =
+    startEdgeStitches +
+    (2 + groupOneRemainingKnit) * groupOneCount +
+    (2 + middleGroupRemainingKnit) * middleGroupCount +
+    (2 + groupOneRemainingKnit) * groupTwoCount +
+    (2 + endEdgeStitches);
+
+  if (calculatedStitchTotal !== originalStitchCount) {
+    throw new Error("The math ain't mathing! Try again with different numbers");
+  }
+
+  return instructionOutput;
 }
 
-export class IncreaseStrategy implements IKnittingStrategy {
-  readonly operation = "increase" as const;
-
-  validate(originalStitches: number, changes: number): void {
-    if (changes < 0) {
-    throw new Error("Increase count cannot be negative");
-    }  
-  }
-
-  calculateTargetStitches(originalStitches: number, effectiveChanges: number): number {
-    return originalStitches + effectiveChanges;
-  }
-}
-
-export class KnittingCalculator {
-  static calculate(
-    originalStitches: number, 
-    changes: number, 
-    strategy: IKnittingStrategy
-  ): KnittingResult {
-    strategy.validate(originalStitches, changes);
-
-    const targetStitches = strategy.calculateTargetStitches(originalStitches, changes);
-    const intervals = UniformDistributor.distribute(originalStitches, changes);
-    const groups = UniformDistributor.groupIntervals(intervals);
-
-    return {
-      originalStitches,
-      changes,
-      targetStitches,
-      operation: strategy.operation,
-      intervals,
-      groups
-    };
-  }
-}
-
-/**
- * // Calculando diminuições (limitadas a no máximo metade dos pontos)
-try {
-  KnittingCalculator.calculate(30, 20, new DecreaseStrategy());
-} catch (error) {
-  console.log(error.message); 
-  // Exibe exatamente: "Decrease cannot be more than half the Current Stitch Count"
-}
-
-// Calculando aumentos
-const resultIncrease = KnittingCalculator.calculate(
-  30, 
-  5, 
-  new IncreaseStrategy()
-);
-// Output: effectiveChanges = 5, targetStitches = 35
- */
+// DEBUG
+console.log(increase(40, 10))
