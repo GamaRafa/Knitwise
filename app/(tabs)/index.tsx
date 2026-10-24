@@ -10,30 +10,31 @@ export default function CalculatorMockScreen() {
   const [decStitches, setDecStitches] = useState("0");
   const [decreases, setDecreases] = useState("0");
 
-  const [resultIncrease, setResultIncrease] = useState("");
-  const [resultDecrease, setResultDecrease] = useState("");
-
-  // const { calculate, result, error } = useKnittingCalculator();
-
-  // const handleCalculate = () => {
-  //   try {
-  //     setError(null);
-  //     const res = calculateKnitting(Number(stitches), Number(changes), operation);
-  //     setResult(res);
-  //   } catch (err: any) {
-  //     setError(err.message);
-  //     setResult(null);
-  //   }
-  // }
+  const [resultIncrease, setResultIncrease] = useState<string | null>(null);
+  const [errorIncrease, setErrorIncrease] = useState<string | null>(null);
+  const [resultDecrease, setResultDecrease] = useState<string | null>(null);
+  const [errorDecrease, setErrorDecrease] = useState<string | null>(null);
 
   const handleCalculateIncrease = () => {
-    const res = increase(Number(incStitches), Number(increases));
-    setResultIncrease(res);
+    try {
+      setErrorIncrease(null);
+      const res = increase(Number(incStitches), Number(increases));
+      setResultIncrease(res);
+    } catch (err: any) {
+      setErrorIncrease(err.message);
+      setResultIncrease(null)
+    }
   }
 
   const handleCalculateDecrease = () => {
-    const res = decrease(Number(decStitches), Number(decreases));
-    setResultDecrease(res);
+    try {
+      setErrorDecrease(null);
+      const res = decrease(Number(decStitches), Number(decreases));
+      setResultDecrease(res);
+    } catch (err: any) {
+      setErrorDecrease(err.message);
+      setResultDecrease(null);
+    }
   }
 
   return (
@@ -59,6 +60,13 @@ export default function CalculatorMockScreen() {
       />
 
       <Button title="Calcular aumentos" onPress={handleCalculateIncrease} />
+
+      {/* Erro aumentos */}
+      {errorIncrease && (
+        <View style={styles.errorBox}>
+          <Text style={styles.errorText}>{errorIncrease}</Text>
+        </View>
+      )}
 
       {/* Resultado aumentos */}
       {resultIncrease && (
@@ -91,6 +99,13 @@ export default function CalculatorMockScreen() {
       />
 
       <Button title="Calcular diminuições" onPress={handleCalculateDecrease} />
+
+      {/* Erros diminuições */}
+      {errorDecrease && (
+        <View style={styles.errorBox}>
+          <Text style={styles.errorText}>{errorDecrease}</Text>
+        </View>
+      )}
 
       {/* Resultado diminuições */}
       {resultDecrease && (

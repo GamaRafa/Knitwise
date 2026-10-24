@@ -362,7 +362,7 @@ Instantiated once. Hooks import from here and pass repos into use case calls.
 - ~~should a Counter have a _rename_ use case?~~
 - create ugly test screens
 - first DB migration
-- TODO: finish error handling on calculators and change mock screen accordingly
+- ~~TODO: finish error handling on calculators and change mock screen accordingly~~
 
 ## Architecture
 ```

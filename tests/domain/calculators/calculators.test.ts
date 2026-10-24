@@ -1,4 +1,4 @@
-import { increase } from "@/src/domain/calculators/calculators";
+import { decrease, increase } from "@/src/domain/calculators/calculators";
 
 describe("increase and decrease distribution calculators", () => {
   describe("increase", () => {
@@ -45,20 +45,48 @@ describe("increase and decrease distribution calculators", () => {
         increase(50, 52)
       ).toThrow("Increase stitches must be less than the current stitch count");
     });
-  // });
-  // describe("decrease", () => {
-  //   it("should calculate the exact distribution when original/changes is even", () => {
-  //     expect(decrease(20, 5)).toEqual("K1, (k2tog, k2) 4 times, k2tog, k1");
-  //   });
+  });
+  describe("decrease", () => {
+    it("should calculate the exact distribution when original/changes is even", () => {
+      expect(decrease(20, 5)).toEqual("K1, (k2tog, k2) 4 times, k2tog, k1");
+    });
 
-  //   it("should calculate the distribution with remainder when original/changes is not even", () => {
-  //     expect(decrease(63, 8)).toEqual("K3, (k2tog, k6) 3 times, (k2tog, k6) 4 times, k2tog, k2");
-  //   });
+    it("should calculate the distribution with remainder when original/changes is not even", () => {
+      expect(decrease(63, 8)).toEqual("K3, (k2tog, k6) 3 times, (k2tog, k6) 4 times, k2tog, k2");
+    });
 
-  //   it("should handle the case when change is zero", () => {}); // TODO
+    it("should throw error when original stitch count is zero", () => {
+      expect(() =>
+        decrease(0, 5)
+      ).toThrow("Original stitch count must be greater than zero");
+    });
 
-  //   it("should handle throw error when changes is negative", () => {})  // TODO
+    it("should throw error when original stitch count is negative", () => {
+      expect(() => 
+        decrease(-5, 10)
+      ).toThrow("Original stitch count must be greater than zero");
+    })
 
-  //   it("should throw error when number of decreases is more than half the stitch count", () => {})  // TODO
+    it("should throw error when change is zero", () => {
+      expect(() =>
+        decrease(50, 0)
+      ).toThrow("The number of decreases must be greater than zero");
+    });
+
+    it("should throw error when changes is negative", () => {
+      expect(() =>
+        decrease(50, -5)
+      ).toThrow("The number of decreases must be greater than zero");
+    });
+
+    it("should calculate the distribution when decreases is the exact half as the stitch count", () => {
+      expect(decrease(50, 25)).toEqual("K0, (k2tog, k0) 24 times, k2tog, k0");
+    });
+
+    it("should throw error when number of decreases is more than half the stitch count", () => {
+      expect(() =>
+        decrease(50, 30)
+      ).toThrow("Decrease stitches cannot be more than half the current stitch count");
+    });
   });
 });

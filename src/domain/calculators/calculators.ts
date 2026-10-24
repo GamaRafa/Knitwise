@@ -162,7 +162,7 @@ export function decrease(originalStitchCount: number, stitchChange: number): str
     throw new Error("The number of decreases must be greater than zero");
   }
 
-  if (stitchChange >= originalStitchCount / 2) {
+  if (stitchChange > originalStitchCount / 2) {
     throw new Error("Decrease stitches cannot be more than half the current stitch count");
   }
 
